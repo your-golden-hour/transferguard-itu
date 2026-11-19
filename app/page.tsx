@@ -1,57 +1,172 @@
 "use client"
-import { useState, type FormEvent } from "react"
+
+import { useEffect, useRef, useState, type FormEvent } from "react"
 import { scenarios, recipients, questions, unknown, type Answers, type Transfer } from "../lib/profile"
 import type { evaluate } from "../lib/risk"
+
 type Result = ReturnType<typeof evaluate>
-const labels = { low: "Низкий риск", medium: "Повышенный риск", high: "Высокий риск" }
-const advice = {
-  SHOW_SUMMARY: "Проверьте имя получателя и сумму.",
-  ASK_CONTEXT: "Ответьте на вопросы ниже, чтобы уточнить обстоятельства.",
-  REVIEW_DETAILS: "Сверьте реквизиты и назначение перевода с вашей договорённостью.",
-  STOP_AND_VERIFY_WITH_BANK: "Остановитесь. Завершите разговор и самостоятельно свяжитесь с банком через официальное приложение."
-}
+type Screen = "transfer" | "review" | "context" | "warning" | "complete" | "cancelled"
+const money = new Intl.NumberFormat("ru-KZ")
+const questionKeys = Object.keys(questions) as (keyof Answers)[]
+
 export default function Demo() {
   const [index, setIndex] = useState(0)
-  const [amount, setAmount] = useState("12000")
   const [recipient, setRecipient] = useState<Transfer["recipient"]>("regular")
+  const [amount, setAmount] = useState("12000")
+  const [screen, setScreen] = useState<Screen>("transfer")
   const [answers, setAnswers] = useState<Answers>(unknown)
-  const [context, setContext] = useState(false)
-  const [result, setResult] = useState<Result | null>(null)
+  const [assessment, setAssessment] = useState<Result | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
-  function reset() { setAnswers(unknown); setContext(false); setResult(null); setError("") }
-  function select(i: number) {
-    reset(); setIndex(i); setAmount(String(scenarios[i].amount)); setRecipient(scenarios[i].recipient)
+  const title = useRef<HTMLHeadingElement>(null)
+  const previousScreen = useRef(screen)
+
+  useEffect(() => {
+    if (previousScreen.current !== screen) title.current?.focus()
+    previousScreen.current = screen
+  }, [screen])
+
+  function reset(next: Screen) {
+    setAnswers(unknown)
+    setAssessment(null)
+    setError("")
+    setScreen(next)
   }
-  async function check(event: FormEvent) {
-    event.preventDefault(); setBusy(true); setError("")
+
+  function selectScenario(i: number) {
+    setIndex(i)
+    setRecipient(scenarios[i].recipient)
+    setAmount(String(scenarios[i].amount))
+    reset("transfer")
+  }
+
+  async function assess(event: FormEvent, context: Answers) {
+    event.preventDefault()
+    setBusy(true)
+    setError("")
     try {
-      const response = await fetch("/api/risk/evaluate", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: Number(amount), recipient, answers }) })
-      if (!response.ok) throw new Error()
-      const assessment: Result = await response.json()
-      setResult(assessment)
-      if (assessment.recommendedAction === "ASK_CONTEXT") setContext(true)
-    } catch { setError("Проверка недоступна. Попробуйте ещё раз."); setResult(null) }
-    finally { setBusy(false) }
+      const response = await fetch("/api/risk/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(amount), recipient, answers: context })
+      })
+      if (!response.ok) throw new Error("Assessment failed")
+      const result: Result = await response.json()
+      setAssessment(result)
+      const action = result.recommendedAction
+      setScreen(action === "STOP_AND_VERIFY_WITH_BANK" ? "warning" : action === "ASK_CONTEXT" ? "context" : "review")
+    } catch {
+      setError("Не удалось выполнить проверку. Попробуйте ещё раз.")
+    } finally {
+      setBusy(false)
+    }
   }
-  return <main><header><strong><span aria-hidden="true">◈</span> TransferGuard</strong><small>ITU Hackathon 2026</small></header>
-    <h1>Проверка перевода</h1><p className="intro">Посмотрите, как обстоятельства перевода меняют рекомендацию.</p>
-    <div className="columns"><aside><h2>Сценарии</h2><nav aria-label="Сценарии">{scenarios.map((s, i) =>
-      <button key={s.title} disabled={busy} aria-pressed={i === index} onClick={() => select(i)}>{s.title}</button>)}</nav>
-      <p>{scenarios[index].detail}</p><small>Демо на вымышленных данных. Реальные платежи отключены.</small></aside>
-    <section><form onSubmit={check}><fieldset disabled={busy}><legend>Детали перевода</legend>
-      <label>Получатель<select value={recipient} onChange={e => { reset(); setRecipient(e.target.value as Transfer["recipient"]) }}>
-        {Object.entries(recipients).map(([id, name]) => <option value={id} key={id}>{name}</option>)}</select></label>
-      <label>Сумма, ₸<input required type="number" min="1" max="10000000" step="1" value={amount} onChange={e => { reset(); setAmount(e.target.value) }} /></label>
-      <small>Обычная сумма по демо-истории — 20 000 ₸.</small>
-      {context ? <div><h2>Обстоятельства перевода</h2>{(Object.keys(questions) as (keyof Answers)[]).map(key =>
-        <label key={key}>{questions[key]}<select value={String(answers[key])} onChange={e => { setResult(null); setAnswers({ ...answers, [key]: e.target.value === "null" ? null : e.target.value === "true" }) }}>
-          <option value="null">Неизвестно</option><option value="true">Да</option><option value="false">Нет</option></select></label>)}</div>
-      : <button className="text" type="button" onClick={() => { setContext(true); setResult(null) }}>Добавить обстоятельства перевода</button>}
-      <button className="primary">{busy ? "Проверяем…" : "Проверить перевод"}</button></fieldset></form>
-      <div aria-live="polite">{error && <p role="alert">{error}</p>}{result && <article data-level={result.riskLevel}><small>Результат проверки</small><h2>{labels[result.riskLevel]}</h2>
-        <p>{advice[result.recommendedAction]}</p>{result.reasons.length > 0 && <ul>{result.reasons.map(r => <li key={r.code}>{r.text}</li>)}</ul>}
-        <small>{result.riskScore} из 100 по демо-шкале.{result.missingContext.length > 0 && " Часть контекста неизвестна."}</small></article>}</div>
-    </section></div></main>
+
+  const amountText = money.format(Number(amount)) + " ₸"
+  const recipientName = recipients[recipient].split(" · ")[0]
+  const screenTitle: Record<Screen, string> = {
+    transfer: "Новый перевод",
+    review: "Подтверждение",
+    context: "Уточним детали",
+    warning: "Остановите перевод",
+    complete: "Перевод завершён",
+    cancelled: "Перевод отменён"
+  }
+
+  return (
+    <main className="workspace">
+      <aside className="guide">
+        <div className="brand"><span aria-hidden="true">◈</span> TransferGuard</div>
+        <h1>Защита в момент перевода</h1>
+        <p className="summary">Пройдите сценарий в мобильном интерфейсе. Если операции нужна дополнительная проверка, она появится до подтверждения.</p>
+        <nav aria-label="Сценарии демо">
+          {scenarios.map((scenario, i) => (
+            <button key={scenario.title} type="button" aria-pressed={i === index} disabled={busy} onClick={() => selectScenario(i)}>
+              {scenario.title}
+            </button>
+          ))}
+        </nav>
+        <p className="scenario" aria-live="polite">{scenarios[index].detail}</p>
+      </aside>
+
+      <section className="phone" aria-label="Симулятор мобильного банка">
+        <div className="app-bar">
+          <strong>Мобильный банк</strong><span>Симуляция</span>
+        </div>
+        <div className="app-content" data-screen={screen}>
+          {screen === "warning" && <span className="status-icon" aria-hidden="true">!</span>}
+          {screen === "complete" && <span className="status-icon" aria-hidden="true">✓</span>}
+          <h2 ref={title} tabIndex={-1}>{screenTitle[screen]}</h2>
+
+          {screen === "transfer" && (
+            <form onSubmit={event => assess(event, unknown)}>
+              <fieldset disabled={busy}>
+                <label>Получатель
+                  <select value={recipient} onChange={event => setRecipient(event.target.value as Transfer["recipient"])}>
+                    {Object.entries(recipients).map(([id, name]) => <option value={id} key={id}>{name}</option>)}
+                  </select>
+                </label>
+                <label>Сумма, ₸
+                  <input required type="number" inputMode="numeric" min="1" max="10000000" step="1" value={amount} onChange={event => setAmount(event.target.value)} />
+                </label>
+                <button className="primary">{busy ? "Загрузка…" : "Продолжить"}</button>
+              </fieldset>
+            </form>
+          )}
+
+          {(screen === "review" || screen === "context" || screen === "warning") && (
+            <div className="transaction"><span>{recipientName}</span><strong>{amountText}</strong></div>
+          )}
+
+          {screen === "context" && (
+            <form onSubmit={event => assess(event, answers)}>
+              <p>Ответьте на три вопроса, чтобы продолжить перевод.</p>
+              <fieldset disabled={busy}>
+                {questionKeys.map(key => (
+                  <fieldset className="question" key={key}>
+                    <legend>{questions[key]}</legend>
+                    <div className="choices">{([true, false] as const).map(value => (
+                      <label key={String(value)}>
+                        <input type="radio" name={key} required checked={answers[key] === value}
+                          onChange={() => setAnswers(current => ({ ...current, [key]: value }))} />
+                        {value ? "Да" : "Нет"}
+                      </label>
+                    ))}</div>
+                  </fieldset>
+                ))}
+                <button className="primary">{busy ? "Проверяем…" : "Продолжить"}</button>
+                <button type="button" className="secondary" onClick={() => reset("cancelled")}>Отменить перевод</button>
+              </fieldset>
+            </form>
+          )}
+
+          {screen === "review" && (
+            <>
+              {assessment?.recommendedAction === "REVIEW_DETAILS" && <p>Сверьте имя получателя и сумму с вашей договорённостью.</p>}
+              <button className="primary" onClick={() => setScreen("complete")}>Подтвердить перевод</button>
+              <button className="secondary" onClick={() => reset("transfer")}>Изменить данные</button>
+              <button className="text" onClick={() => setScreen("context")}>Мне дали инструкции по телефону</button>
+            </>
+          )}
+
+          {screen === "warning" && (
+            <>
+              <p>Есть признаки мошенничества. Завершите разговор и самостоятельно свяжитесь с банком через официальное приложение.</p>
+              <ul>{assessment?.reasons.map(reason => <li key={reason.code}>{reason.text}</li>)}</ul>
+              <button className="primary" onClick={() => reset("cancelled")}>Отменить перевод</button>
+            </>
+          )}
+
+          {(screen === "complete" || screen === "cancelled") && (
+            <>
+              <p>{screen === "complete" ? "Учебный перевод завершён. Списания не было." : "Операция завершена без перевода."}</p>
+              <button className="primary" onClick={() => selectScenario(index)}>Начать заново</button>
+            </>
+          )}
+
+          {error && <p role="alert" className="error">{error}</p>}
+        </div>
+      </section>
+    </main>
+  )
 }

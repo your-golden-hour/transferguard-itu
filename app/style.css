@@ -1,20 +1,47 @@
 * { box-sizing: border-box }
-body { margin:0; background:#f1f4f3; color:#16342e; font: 1rem/1.55 "Segoe UI", Arial, sans-serif }
-main { max-width:1080px; margin:auto; padding:0 5% 4rem }
-header { display:flex; justify-content:space-between; align-items:center; padding:1.4rem 0; border-bottom:1px solid #c8d3cf }
-header strong { font-size:1.25rem } header span { color:#167661 }
-h1 { font-size:clamp(2.2rem,6vw,4.2rem); line-height:1.05; letter-spacing:-.045em; margin:3.5rem 0 .8rem }
-.intro { color:#405952; margin:0 0 2rem }.columns { display:grid; grid-template-columns: .85fr 1.4fr; gap:1rem; align-items:start }
-aside,section { border-radius:1.2rem; padding:clamp(1.2rem,3vw,2rem) }
-aside { background:#163f37; color:white } aside small { color:#d2e5dc } section { background:white; border:1px solid #d4ded9 }
-h2,legend { font-size:1.28rem; font-weight:700; margin:0 0 1rem } fieldset { padding:0; margin:0; border:0; min-width:0 }
-button,input,select { font:inherit; border-radius:.55rem } button { cursor:pointer }
-nav { display:grid; gap:.45rem } nav button { background:transparent; color:white; text-align:left; border:1px solid #678b81; padding:.65rem .9rem }
-nav button[aria-pressed=true] { background:#d6f7b6; color:#173b30; border-color:#d6f7b6 }
-small { font-size:.88rem } label { display:block; margin:.6rem 0; font-weight:600 }
-select,input { width:100%; padding:.65rem; margin:.3rem 0 .15rem; border:1px solid #96aaa1; color:#16342e; background:white }
-.primary { display:block; width:100%; padding:.78rem; margin-top:1.3rem; background:#185845; border:0; color:white; font-weight:700 }
-.text { display:block; background:transparent; border:0; padding:.7rem 0; color:#185845; text-decoration:underline } form h2 { margin-top:1.4rem }
-article { margin-top:1rem; padding:1.2rem; background:#e8f4e9; border-radius:.75rem } article h2 { margin:.25rem 0 } article[data-level=medium] { background:#fff1d6 } article[data-level=high] { background:#ffe4dc }
-:focus-visible { outline:3px solid #288ace; outline-offset:2px } button:disabled { opacity:.65 }
-@media(max-width:700px) { .columns { grid-template-columns:1fr } h1 { margin-top:2rem } }
+body { margin: 0; background: #eef2f8; color: #142641; font: 1rem/1.5 "Segoe UI", Arial, sans-serif }
+.workspace { display: grid; grid-template-columns: minmax(0, 380px) minmax(0, 430px); gap: clamp(2rem, 7vw, 6rem); justify-content: center; align-items: start; max-width: 1100px; margin: auto; padding: 3rem 1.5rem }
+.guide { padding-block: 1rem }
+.brand { font-size: 1.1rem; font-weight: 750 } .brand span { color: #2955b5 }
+h1 { margin: 2rem 0 1rem; font-size: clamp(2rem, 4vw, 3.65rem); letter-spacing: -.05em; line-height: 1.06 }
+.summary, .scenario { color: #405476 }
+nav { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.5rem }
+button, input, select { font: inherit }
+button { cursor: pointer }
+nav button { padding: .5rem .8rem; border: 1px solid #a7b7d1; border-radius: 2rem; color: #233961; background: #fff }
+nav button[aria-pressed=true] { background: #d9e6ff; border-color: #466ac0 }
+.phone { min-height: 600px; border: 8px solid #182844; border-radius: 2rem; background: #fff; overflow: hidden; box-shadow: 0 22px 52px #132c5a25 }
+.app-bar { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: 1.1rem 1.45rem; border-bottom: 1px solid #dae3f1; background: #f8faff }
+.app-bar span { color: #485b79; font-size: .875rem }
+.app-content { padding: 1.45rem; overflow-wrap: anywhere }
+.app-content h2 { margin: 0 0 1.2rem; font-size: 1.7rem; line-height: 1.15; letter-spacing: -.02em }
+fieldset { min-inline-size: 0; margin: 0; padding: 0; border: 0 }
+label { display: block; margin: 0 0 .9rem; font-weight: 600 }
+select, input[type=number] { display: block; width: 100%; color: inherit; background: #f5f8fc; border: 1px solid #a5b6ce; padding: .7rem; border-radius: .65rem; margin-top: .3rem }
+.primary, .secondary, .text { display: block; width: 100%; padding: .7rem .85rem; border: 1px solid transparent; margin-top: .65rem; border-radius: .65rem; font-weight: 700 }
+.primary { background: #244fab; color: white }
+.secondary { background: #edf2fb; color: #253f6d }
+.text { background: transparent; color: #244fab; text-decoration: underline }
+.transaction { display: flex; justify-content: space-between; gap: .65rem; padding: .8rem .95rem; border-radius: .7rem; background: #eef3fb }
+.question { padding: .3rem 0 .75rem }
+.question legend { padding: .35rem 0 0; font-weight: 600 }
+.choices { display: flex; gap: .45rem }
+.choices label { display: flex; align-items: center; gap: .4rem; padding: .4rem .7rem; margin: 0; border: 1px solid #a5b6ce; border-radius: .6rem; cursor: pointer }
+.choices label:has(:checked) { background: #d9e6ff; border-color: #466ac0 }
+.choices input { margin: 0; accent-color: #244fab }
+.status-icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; margin-bottom: .8rem; border-radius: 100%; background: #e3f5ea; color: #15563d; font-size: 1.4rem; font-weight: 800 }
+[data-screen=warning] { background: #fff6f4 } [data-screen=warning] .status-icon { background: #ffe0dc; color: #a51b24 }
+[data-screen=warning] .primary { background: #a51b24 }
+[data-screen=warning] ul { padding-left: 1.3rem }
+.error { color: #9f1822 }
+:focus-visible { outline: 3px solid #3163c9; outline-offset: 2px }
+button:disabled { opacity: .65; cursor: wait }
+@media (max-width: 740px) {
+  .workspace { grid-template-columns: minmax(0, 480px); gap: 1rem; padding: 1rem .85rem 2rem }
+  .guide { padding-block: .25rem 0 }
+  h1 { margin: .7rem 0 .4rem; font-size: 1.8rem }
+  .summary, .scenario { margin: .6rem 0 }
+  nav { margin-top: .65rem }
+  .phone { min-height: 0; border-width: 2px; border-radius: 1.15rem }
+  .app-bar, .app-content { padding: 1rem }
+}

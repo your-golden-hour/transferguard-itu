@@ -1,0 +1,20 @@
+* { box-sizing: border-box }
+body { margin:0; background:#f1f4f3; color:#16342e; font: 1rem/1.55 "Segoe UI", Arial, sans-serif }
+main { max-width:1080px; margin:auto; padding:0 5% 4rem }
+header { display:flex; justify-content:space-between; align-items:center; padding:1.4rem 0; border-bottom:1px solid #c8d3cf }
+header strong { font-size:1.25rem } header span { color:#167661 }
+h1 { font-size:clamp(2.2rem,6vw,4.2rem); line-height:1.05; letter-spacing:-.045em; margin:3.5rem 0 .8rem }
+.intro { color:#405952; margin:0 0 2rem }.columns { display:grid; grid-template-columns: .85fr 1.4fr; gap:1rem; align-items:start }
+aside,section { border-radius:1.2rem; padding:clamp(1.2rem,3vw,2rem) }
+aside { background:#163f37; color:white } aside small { color:#d2e5dc } section { background:white; border:1px solid #d4ded9 }
+h2,legend { font-size:1.28rem; font-weight:700; margin:0 0 1rem } fieldset { padding:0; margin:0; border:0; min-width:0 }
+button,input,select { font:inherit; border-radius:.55rem } button { cursor:pointer }
+nav { display:grid; gap:.45rem } nav button { background:transparent; color:white; text-align:left; border:1px solid #678b81; padding:.65rem .9rem }
+nav button[aria-pressed=true] { background:#d6f7b6; color:#173b30; border-color:#d6f7b6 }
+small { font-size:.88rem } label { display:block; margin:.6rem 0; font-weight:600 }
+select,input { width:100%; padding:.65rem; margin:.3rem 0 .15rem; border:1px solid #96aaa1; color:#16342e; background:white }
+.primary { display:block; width:100%; padding:.78rem; margin-top:1.3rem; background:#185845; border:0; color:white; font-weight:700 }
+.text { display:block; background:transparent; border:0; padding:.7rem 0; color:#185845; text-decoration:underline } form h2 { margin-top:1.4rem }
+article { margin-top:1rem; padding:1.2rem; background:#e8f4e9; border-radius:.75rem } article h2 { margin:.25rem 0 } article[data-level=medium] { background:#fff1d6 } article[data-level=high] { background:#ffe4dc }
+:focus-visible { outline:3px solid #288ace; outline-offset:2px } button:disabled { opacity:.65 }
+@media(max-width:700px) { .columns { grid-template-columns:1fr } h1 { margin-top:2rem } }
